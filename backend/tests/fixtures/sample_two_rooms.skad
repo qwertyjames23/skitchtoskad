@@ -1,0 +1,22 @@
+# Two-room apartment floor plan
+UNIT mm
+
+# Outer walls
+WALL (0,0) -> (6000,0) THICK 200
+WALL (6000,0) -> (6000,4000) THICK 200
+WALL (6000,4000) -> (0,4000) THICK 200
+WALL (0,4000) -> (0,0) THICK 200
+
+# Partition wall
+WALL (3000,0) -> (3000,4000) THICK 150
+
+# Door in partition
+DOOR (3000,1500) -> (3000,2400) SWING left
+
+# Windows
+WINDOW (1000,4000) -> (2000,4000)
+WINDOW (4000,4000) -> (5500,4000)
+
+# Room labels
+LABEL (1500,2000) "Kitchen"
+LABEL (4500,2000) "Living Room"

@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m pytest:*)",
+      "Bash(python3 -c \" import sys, json for line in sys.stdin: try: obj = json.loads\\(line.strip\\(\\)\\) if obj.get\\(''type''\\) == ''human'': msg = obj.get\\(''message'', {}\\) if isinstance\\(msg, dict\\): content = msg.get\\(''content'', ''''\\) if isinstance\\(content, str\\) and content.strip\\(\\): print\\(''USER:'', content[:500]\\) elif isinstance\\(content, list\\): for c in content: if isinstance\\(c, dict\\) and c.get\\(''type''\\) == ''text'': print\\(''USER:'', c.get\\(''text'', ''''\\)[:500]\\) except: pass \")",
+      "Bash(python3:*)",
+      "Bash(python -c:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx vite build:*)",
+      "Bash(./node_modules/.bin/tsc:*)",
+      "Bash(./node_modules/.bin/vite build:*)",
+      "Bash(pyinstaller:*)",
+      "Bash(timeout 10 ./SKAD.exe:*)",
+      "Bash(pip --version:*)",
+      "Bash(python -m pip install:*)",
+      "Bash(python -m PyInstaller:*)",
+      "Bash(timeout:*)",
+      "Bash(taskkill:*)",
+      "Bash(curl:*)",
+      "Bash(find:*)",
+      "Bash(python -m uvicorn:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npx vite)",
+      "Bash(node_modules/.bin/vite:*)"
+    ]
+  }
+}
