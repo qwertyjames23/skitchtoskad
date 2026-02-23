@@ -54,16 +54,30 @@ class TestGenerateEndpoint:
     def test_generate_from_coords(self):
         r = client.post("/api/generate/from-coords", json={
             "walls": [
-                {"start": [0, 0], "end": [5000, 0], "thickness": 200},
-                {"start": [5000, 0], "end": [5000, 4000], "thickness": 200},
-                {"start": [5000, 4000], "end": [0, 4000], "thickness": 200},
-                {"start": [0, 4000], "end": [0, 0], "thickness": 200},
+                {"id": "wall-1", "start": [0, 0], "end": [5000, 0], "thickness": 200},
+                {"id": "wall-2", "start": [5000, 0], "end": [5000, 4000], "thickness": 200},
+                {"id": "wall-3", "start": [5000, 4000], "end": [0, 4000], "thickness": 200},
+                {"id": "wall-4", "start": [0, 4000], "end": [0, 0], "thickness": 200},
+            ],
+            "doors": [
+                {"id": "door-1", "start": [2000, 0], "end": [2900, 0], "swing": "left"},
+            ],
+            "windows": [
+                {"id": "window-1", "start": [5000, 1200], "end": [5000, 2200], "sill_height": 900, "head_height": 2100},
             ],
             "labels": [{"position": [2500, 2000], "text": "Room 1"}],
         })
         assert r.status_code == 200
         data = r.json()
         assert len(data["rooms"]) == 1
+        assert data["doors"][0]["id"] == "door-1"
+        assert data["doors"][0]["start"] == [2000, 0]
+        assert data["doors"][0]["end"] == [2900, 0]
+        assert data["windows"][0]["id"] == "window-1"
+        assert data["windows"][0]["start"] == [5000, 1200]
+        assert data["windows"][0]["end"] == [5000, 2200]
+        wall_ids = [seg.get("id") for seg in data["wall_segments"]]
+        assert wall_ids == ["wall-1", "wall-2", "wall-3", "wall-4"]
 
 
 class TestExportEndpoint:

@@ -19,6 +19,7 @@ class Coordinate(BaseModel):
 
 
 class WallInput(BaseModel):
+    id: str | None = None
     start: list[float]  # [x, y]
     end: list[float]
     thickness: float = 200.0
@@ -32,21 +33,45 @@ class WallInput(BaseModel):
 
 
 class DoorInput(BaseModel):
+    id: str | None = None
     start: list[float]
     end: list[float]
     swing: str = "left"
 
+    @field_validator("start", "end")
+    @classmethod
+    def must_be_pair(cls, v: list[float]) -> list[float]:
+        if len(v) != 2:
+            raise ValueError("Coordinate must be [x, y]")
+        return v
+
 
 class WindowInput(BaseModel):
+    id: str | None = None
     start: list[float]
     end: list[float]
     sill_height: float = 900.0
     head_height: float = 2100.0
 
+    @field_validator("start", "end")
+    @classmethod
+    def must_be_pair(cls, v: list[float]) -> list[float]:
+        if len(v) != 2:
+            raise ValueError("Coordinate must be [x, y]")
+        return v
+
 
 class LabelInput(BaseModel):
+    id: str | None = None
     position: list[float]
     text: str
+
+    @field_validator("position")
+    @classmethod
+    def must_be_pair(cls, v: list[float]) -> list[float]:
+        if len(v) != 2:
+            raise ValueError("Coordinate must be [x, y]")
+        return v
 
 
 class ScriptRequest(BaseModel):

@@ -1,0 +1,248 @@
+{
+    "title": "National Building Code of the Philippines",
+    "presidential_decree": "PD 1096",
+    "chapters": [
+        {
+            "chapter": 1,
+            "title": "General Provisions",
+            "sections": [
+                {
+                    "section": 101,
+                    "title": "Title",
+                    "summary": "This Decree shall be known as the National Building Code of the Philippines."
+                },
+                {
+                    "section": 102,
+                    "title": "Declaration of Policy",
+                    "summary": "Safeguards life, health, property, and public welfare through minimum standards in building design and construction."
+                },
+                {
+                    "section": 103,
+                    "title": "Scope and Application",
+                    "summary": "Applies to design, construction, alteration, repair, use, occupancy, and demolition of buildings."
+                },
+                {
+                    "section": 104,
+                    "title": "General Building Requirements",
+                    "summary": "Buildings must conform to safe construction principles and environmental safeguards."
+                },
+                {
+                    "section": 105,
+                    "title": "Site Requirements",
+                    "summary": "Building sites must be sanitary, safe, and away from hazards."
+                },
+                {
+                    "section": 106,
+                    "title": "Definitions",
+                    "summary": "Definitions are provided in Annex A."
+                }
+            ]
+        },
+        {
+            "chapter": 2,
+            "title": "Administration and Enforcement",
+            "sections": [
+                {
+                    "section": 201,
+                    "title": "Responsibility for Administration",
+                    "summary": "Enforcement vested in the Secretary of Public Works."
+                },
+                {
+                    "section": 205,
+                    "title": "Building Officials",
+                    "summary": "Building Officials enforce provisions in their jurisdiction."
+                },
+                {
+                    "section": 206,
+                    "title": "Qualifications of Building Officials",
+                    "summary": "Must be Filipino, registered architect or civil engineer with 5 years experience."
+                },
+                {
+                    "section": 212,
+                    "title": "Administrative Fines",
+                    "summary": "Fines up to 10,000 pesos for violations."
+                },
+                {
+                    "section": 213,
+                    "title": "Penal Provisions",
+                    "summary": "Violations punishable by fine up to 20,000 pesos or imprisonment up to 2 years."
+                }
+            ]
+        },
+        {
+            "chapter": 3,
+            "title": "Permits and Inspection",
+            "sections": [
+                {
+                    "section": 301,
+                    "title": "Building Permits",
+                    "summary": "Building permit required before construction."
+                },
+                {
+                    "section": 302,
+                    "title": "Application for Permits",
+                    "summary": "Requires TCT, plans, cost estimate, occupancy use."
+                },
+                {
+                    "section": 304,
+                    "title": "Issuance of Building Permits",
+                    "summary": "Permit issued within 15 days if compliant."
+                },
+                {
+                    "section": 305,
+                    "title": "Validity",
+                    "summary": "Permit expires if work not started within 1 year."
+                },
+                {
+                    "section": 309,
+                    "title": "Certificate of Occupancy",
+                    "summary": "Required before use or occupancy of building."
+                }
+            ]
+        },
+        {
+            "chapter": 4,
+            "title": "Types of Construction",
+            "sections": [
+                {
+                    "section": 401,
+                    "title": "Types of Construction",
+                    "summary": "Classified as Type I to Type V based on materials and fire resistance."
+                }
+            ]
+        },
+        {
+            "chapter": 5,
+            "title": "Fire Zones",
+            "sections": [
+                {
+                    "section": 501,
+                    "title": "Fire Zones Defined",
+                    "summary": "Areas restricted by type of construction and fire resistance."
+                },
+                {
+                    "section": 506,
+                    "title": "Restrictions on Existing Buildings",
+                    "summary": "Non-compliant buildings cannot be expanded unless compliant."
+                }
+            ]
+        },
+        {
+            "chapter": 6,
+            "title": "Fire-Resistive Requirements",
+            "sections": [
+                {
+                    "section": 601,
+                    "title": "Fire-Resistive Rating",
+                    "summary": "Measures fire resistance of materials."
+                },
+                {
+                    "section": 604,
+                    "title": "Fire-Resistive Regulations",
+                    "summary": "Standards for fire testing and materials."
+                }
+            ]
+        },
+        {
+            "chapter": 7,
+            "title": "Classification by Use or Occupancy",
+            "sections": [
+                {
+                    "section": 701,
+                    "title": "Occupancy Classification",
+                    "summary": "Groups A\u2013J (Residential, Institutional, Business, Industrial, Assembly, etc.)."
+                },
+                {
+                    "section": 703,
+                    "title": "Mixed Occupancy",
+                    "summary": "Most restrictive occupancy applies in mixed-use buildings."
+                }
+            ]
+        },
+        {
+            "chapter": 8,
+            "title": "Light and Ventilation",
+            "sections": [
+                {
+                    "section": 805,
+                    "title": "Ceiling Heights",
+                    "summary": "Minimum ceiling heights specified per occupancy."
+                },
+                {
+                    "section": 806,
+                    "title": "Room Dimensions",
+                    "summary": "Minimum room sizes: 6 sqm habitable, 3 sqm kitchen, 1.2 sqm toilet."
+                },
+                {
+                    "section": 808,
+                    "title": "Window Openings",
+                    "summary": "Window area must be at least 10% of floor area."
+                }
+            ]
+        },
+        {
+            "chapter": 9,
+            "title": "Sanitation",
+            "sections": [
+                {
+                    "section": 902,
+                    "title": "Water Supply System",
+                    "summary": "Must connect to potable water supply and comply with plumbing code."
+                },
+                {
+                    "section": 903,
+                    "title": "Wastewater Disposal",
+                    "summary": "Requires sewer connection or septic tank system."
+                }
+            ]
+        },
+        {
+            "chapter": 10,
+            "title": "Building Projections Over Public Streets",
+            "sections": [
+                {
+                    "section": 1003,
+                    "title": "Balconies and Appendages",
+                    "summary": "Balconies must comply with clearance and projection limits."
+                },
+                {
+                    "section": 1005,
+                    "title": "Canopies (Marquees)",
+                    "summary": "Minimum vertical clearance of 3 meters."
+                }
+            ]
+        },
+        {
+            "chapter": 11,
+            "title": "Protection of Pedestrians During Construction",
+            "sections": [
+                {
+                    "section": 1106,
+                    "title": "Pedestrian Protection",
+                    "summary": "Requires fences, canopies, and safety barriers."
+                }
+            ]
+        },
+        {
+            "chapter": 12,
+            "title": "General Design and Construction Requirements",
+            "sections": [
+                {
+                    "section": 1202,
+                    "title": "Excavation and Foundations",
+                    "summary": "Must comply with engineering standards and soil safety."
+                },
+                {
+                    "section": 1206,
+                    "title": "Roof Construction",
+                    "summary": "Roof must be fire-retardant and properly drained."
+                },
+                {
+                    "section": 1207,
+                    "title": "Stairs, Exits, and Occupant Loads",
+                    "summary": "Exit width = Occupant Load \u00f7 165. Minimum two exits for upper floors."
+                }
+            ]
+        }
+    ]
+}

@@ -156,7 +156,12 @@ class BuiltPlan:
             "building_footprint_sq_m": self.building_footprint_sq_m,
             "compliance": self.compliance,
             "wall_segments": [
-                {"start": list(ws.start), "end": list(ws.end), "thickness": ws.thickness}
+                {
+                    "id": ws.id,
+                    "start": list(ws.start),
+                    "end": list(ws.end),
+                    "thickness": ws.thickness,
+                }
                 for ws in self.wall_segments
             ],
         }
@@ -218,10 +223,12 @@ def build_plan_from_coords(data: dict) -> BuiltPlan:
             start=tuple(w["start"]),
             end=tuple(w["end"]),
             thickness=w.get("thickness", 200.0),
+            id=w.get("id"),
         )
 
     for d in data.get("doors", []):
         plan.doors.append(Door(
+            id=d.get("id"),
             start=tuple(d["start"]),
             end=tuple(d["end"]),
             swing=d.get("swing", "left"),
@@ -229,6 +236,7 @@ def build_plan_from_coords(data: dict) -> BuiltPlan:
 
     for win in data.get("windows", []):
         plan.windows.append(Window(
+            id=win.get("id"),
             start=tuple(win["start"]),
             end=tuple(win["end"]),
             sill_height=win.get("sill_height", 900.0),

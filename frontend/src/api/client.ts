@@ -17,6 +17,13 @@ export async function generateFromScript(
   return res.data;
 }
 
+export async function generateFromCoords(
+  data: Record<string, unknown>
+): Promise<FloorPlanResponse> {
+  const res = await api.post<FloorPlanResponse>("/generate/from-coords", data);
+  return res.data;
+}
+
 export async function parseScript(script: string, unit = "mm") {
   const res = await api.post("/parse", { script, unit });
   return res.data;

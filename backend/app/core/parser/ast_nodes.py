@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Union
 
 
 @dataclass
@@ -64,7 +65,7 @@ class NorthCommand:
     line: int = 0
 
 
-Command = WallCommand | DoorCommand | WindowCommand | LabelCommand | UnitCommand | LotCommand | SetbackCommand | NorthCommand
+Command = Union[WallCommand, DoorCommand, WindowCommand, LabelCommand, UnitCommand, LotCommand, SetbackCommand, NorthCommand]
 
 
 @dataclass

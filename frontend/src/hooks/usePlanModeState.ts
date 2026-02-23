@@ -11,7 +11,7 @@ import type {
   ElementId,
 } from "../types/planMode";
 import type { FloorPlanResponse, ParseError } from "../types/plan";
-import { generateFromScript, exportDxfFromScript, downloadBlob } from "../api/client";
+import { generateFromScript, generateFromCoords, exportDxfFromScript, downloadBlob } from "../api/client";
 
 const DEFAULT_LABEL_FONT_SIZE = 6;
 
@@ -293,6 +293,17 @@ export function usePlanModeState() {
         }
       },
     });
+    // Also update the generated plan (3D preview) if present so meshes stay in sync
+    setPlan((p) => {
+      if (!p) return p;
+      const next = { ...p } as any;
+      if (type === "door") next.doors = (next.doors || []).filter((d: any) => d.id !== id);
+      if (type === "window") next.windows = (next.windows || []).filter((w: any) => w.id !== id);
+      if (type === "wall") {
+        next.wall_segments = (next.wall_segments || []).filter((ws: any) => ws.id !== id);
+      }
+      return next;
+    });
   }, []);
 
   // Update
@@ -307,6 +318,24 @@ export function usePlanModeState() {
       }),
     []
   );
+  const _updateWallAndSync = useCallback((id: ElementId, patch: Partial<WallItem>) => {
+    updateWall(id, patch);
+    setPlan((p) => {
+      if (!p) return p;
+      const next = { ...p } as any;
+      next.wall_segments = (next.wall_segments || []).map((ws: any) =>
+        ws.id === id
+          ? {
+              ...ws,
+              ...(patch.start ? { start: patch.start } : {}),
+              ...(patch.end ? { end: patch.end } : {}),
+              ...(typeof patch.thickness === "number" ? { thickness: patch.thickness } : {}),
+            }
+          : ws
+      );
+      return next;
+    });
+  }, [updateWall]);
   const updateDoor = useCallback(
     (id: ElementId, patch: Partial<DoorItem>) =>
       dispatch({
@@ -318,6 +347,16 @@ export function usePlanModeState() {
       }),
     []
   );
+  // keep generated plan in sync for edits
+  const _updateDoorAndSync = useCallback((id: ElementId, patch: Partial<DoorItem>) => {
+    updateDoor(id, patch);
+    setPlan((p) => {
+      if (!p) return p;
+      const next = { ...p } as any;
+      next.doors = (next.doors || []).map((d: any) => (d.id === id ? { ...d, ...patch } : d));
+      return next;
+    });
+  }, [updateDoor]);
   const updateWindow = useCallback(
     (id: ElementId, patch: Partial<WindowItem>) =>
       dispatch({
@@ -329,6 +368,15 @@ export function usePlanModeState() {
       }),
     []
   );
+  const _updateWindowAndSync = useCallback((id: ElementId, patch: Partial<WindowItem>) => {
+    updateWindow(id, patch);
+    setPlan((p) => {
+      if (!p) return p;
+      const next = { ...p } as any;
+      next.windows = (next.windows || []).map((w: any) => (w.id === id ? { ...w, ...patch } : w));
+      return next;
+    });
+  }, [updateWindow]);
   const updateLabel = useCallback(
     (id: ElementId, patch: Partial<LabelItem>) =>
       dispatch({
@@ -356,7 +404,16 @@ export function usePlanModeState() {
     setLoading(true);
     setErrors([]);
     try {
-      const result = await generateFromScript(script);
+      // Prefer coords-based generation so element ids from the editor are preserved
+      const payload: Record<string, unknown> = {
+        unit: "mm",
+        walls: planState.walls.map((w) => ({ id: w.id, start: w.start, end: w.end, thickness: w.thickness })),
+        doors: planState.doors.map((d) => ({ id: d.id, start: d.start, end: d.end, swing: (d as any).swing })),
+        windows: planState.windows.map((w) => ({ id: w.id, start: w.start, end: w.end, sill_height: 900, head_height: (w as any).height ? 900 + (w as any).height : 2100 })),
+        labels: planState.labels.map((l) => ({ text: l.text, position: [l.x, l.y] })),
+      };
+
+      const result = await generateFromCoords(payload);
       setPlan(result);
       return { plan: result, script };
     } catch (err) {
@@ -413,9 +470,9 @@ export function usePlanModeState() {
     addWindow,
     addLabel,
     deleteElement,
-    updateWall,
-    updateDoor,
-    updateWindow,
+    updateWall: _updateWallAndSync,
+    updateDoor: _updateDoorAndSync,
+    updateWindow: _updateWindowAndSync,
     updateLabel,
     initFromScript,
     generate,

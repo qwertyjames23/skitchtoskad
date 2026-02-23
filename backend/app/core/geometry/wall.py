@@ -28,6 +28,7 @@ class WallSegment:
     start: tuple[float, float]
     end: tuple[float, float]
     thickness: float = 200.0  # mm
+    id: str | None = None
 
     @property
     def centerline(self) -> LineString:
@@ -117,8 +118,14 @@ class WallNetwork:
     segments: list[WallSegment] = field(default_factory=list)
     snap_tolerance: float = 1.0  # mm — closes tiny gaps between walls
 
-    def add(self, start: tuple, end: tuple, thickness: float = 200.0) -> WallSegment:
-        seg = WallSegment(start=start, end=end, thickness=thickness)
+    def add(
+        self,
+        start: tuple,
+        end: tuple,
+        thickness: float = 200.0,
+        id: str | None = None,
+    ) -> WallSegment:
+        seg = WallSegment(start=start, end=end, thickness=thickness, id=id)
         self.segments.append(seg)
         return seg
 

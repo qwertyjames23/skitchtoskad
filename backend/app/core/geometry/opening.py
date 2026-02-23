@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from uuid import uuid4
 from shapely.geometry import LineString, Polygon
 
 
@@ -11,8 +12,10 @@ from shapely.geometry import LineString, Polygon
 class Door:
     """A door opening defined by its position along a wall."""
 
-    start: tuple[float, float]
-    end: tuple[float, float]
+    # stable identifier used to correlate elements between 2D/3D/frontend
+    id: str | None = None
+    start: tuple[float, float] = (0.0, 0.0)
+    end: tuple[float, float] = (0.0, 0.0)
     swing: str = "left"  # "left", "right", "double"
     cut_depth: float = 300.0  # how deep to cut through the wall (mm)
 
@@ -61,8 +64,14 @@ class Door:
             "end_angle": end_angle,
         }
 
+    def __post_init__(self) -> None:
+        if not self.id:
+            # generate a stable short uuid for cross-layer correlation
+            self.id = uuid4().hex
+
     def to_dict(self) -> dict:
         return {
+            "id": self.id,
             "type": "door",
             "start": self.start,
             "end": self.end,
@@ -76,8 +85,9 @@ class Door:
 class Window:
     """A window opening defined by its position along a wall."""
 
-    start: tuple[float, float]
-    end: tuple[float, float]
+    id: str | None = None
+    start: tuple[float, float] = (0.0, 0.0)
+    end: tuple[float, float] = (0.0, 0.0)
     sill_height: float = 900.0   # mm from floor
     head_height: float = 2100.0  # mm from floor
     cut_depth: float = 300.0
@@ -116,6 +126,7 @@ class Window:
 
     def to_dict(self) -> dict:
         return {
+            "id": self.id,
             "type": "window",
             "start": self.start,
             "end": self.end,
@@ -123,3 +134,7 @@ class Window:
             "height": round(self.height, 1),
             "glass_lines": self.glass_lines,
         }
+
+    def __post_init__(self) -> None:
+        if not self.id:
+            self.id = uuid4().hex

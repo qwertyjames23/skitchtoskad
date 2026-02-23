@@ -10,6 +10,7 @@ export interface RoomInfo {
 
 export interface DoorInfo {
   type: "door";
+  id?: string;
   start: [number, number];
   end: [number, number];
   swing: string;
@@ -24,6 +25,7 @@ export interface DoorInfo {
 
 export interface WindowInfo {
   type: "window";
+  id?: string;
   start: [number, number];
   end: [number, number];
   width: number;
@@ -60,6 +62,7 @@ export interface LotInfo {
 }
 
 export interface WallSegment {
+  id?: string;
   start: [number, number];
   end: [number, number];
   thickness: number;
