@@ -39,6 +39,16 @@ export async function exportDxfFromScript(
   return res.data;
 }
 
+export async function exportIfcFromScript(
+  script: string,
+  unit = "mm"
+): Promise<Blob> {
+  const res = await api.post("/export/ifc/from-script", { script, unit }, {
+    responseType: "blob",
+  });
+  return res.data;
+}
+
 export function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -72,4 +82,50 @@ export async function loadScriptFile(
     script: data.script,
     projectName: typeof data.projectName === "string" ? data.projectName : "Floor Plan",
   };
+}
+
+// ── Project system ────────────────────────────────────────────────────────────
+
+export interface ProjectMetadata {
+  project_name: string;
+  client_name: string;
+  location: string;
+  created_at: string;
+  last_modified: string;
+}
+
+export interface ProjectInfo {
+  project_path: string;
+  project_name: string;
+  client_name: string;
+  location: string;
+  last_modified: string;
+}
+
+export async function apiCreateProject(data: {
+  project_name: string;
+  client_name?: string;
+  location?: string;
+}): Promise<{ project_path: string; metadata: ProjectMetadata }> {
+  const res = await api.post("/project/new", data);
+  return res.data;
+}
+
+export async function apiListProjects(): Promise<{ projects: ProjectInfo[] }> {
+  const res = await api.get("/project/list");
+  return res.data;
+}
+
+export async function apiOpenProject(
+  project_path: string
+): Promise<{ metadata: ProjectMetadata; script: string }> {
+  const res = await api.post("/project/open", { project_path });
+  return res.data;
+}
+
+export async function apiSaveScriptToProject(
+  script: string
+): Promise<{ ok: boolean; last_modified: string }> {
+  const res = await api.post("/project/save-script", { script });
+  return res.data;
 }

@@ -6,6 +6,7 @@ export interface RoomInfo {
   dimensions_mm: { width: number; height: number };
   perimeter_mm: number;
   polygon: number[][];
+  color?: string;  // hex fill from ROOM command, e.g. "#f5e6d3"
 }
 
 export interface DoorInfo {
@@ -61,6 +62,13 @@ export interface LotInfo {
   setbacks: SetbackInfo;
 }
 
+export interface FurnitureInfo {
+  x: number;
+  y: number;
+  fixture_type: string;
+  rotation: number; // degrees clockwise
+}
+
 export interface WallSegment {
   id?: string;
   start: [number, number];
@@ -81,6 +89,23 @@ export interface FloorPlanResponse {
   building_footprint_sq_m: number;
   compliance: "ok" | "violation" | null;
   wall_segments: WallSegment[];
+  furniture?: FurnitureInfo[];
+  floors?: FloorEntry[];
+}
+
+// A single floor entry within a multi-floor plan
+export interface FloorEntry {
+  floor: number;
+  walls_geojson: FloorPlanResponse["walls_geojson"];
+  rooms: RoomInfo[];
+  doors: DoorInfo[];
+  windows: WindowInfo[];
+  bounding_box: [number, number, number, number];
+  lot?: LotInfo;
+  building_footprint_sq_m: number;
+  compliance: "ok" | "violation" | null;
+  wall_segments: WallSegment[];
+  furniture?: FurnitureInfo[];
 }
 
 export interface ParseError {

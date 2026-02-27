@@ -6,7 +6,7 @@ from app.models.schemas import ScriptRequest, CoordsRequest, GenerateResponse
 from app.core.parser.tokenizer import tokenize, TokenizeError
 from app.core.parser.parser import parse
 from app.core.parser.validator import validate
-from app.models.plan_model import ast_to_plan
+from app.models.plan_model import ast_to_plan, ast_to_floors
 from app.core.geometry.plan import build_plan_from_coords
 
 router = APIRouter(tags=["generate"])
@@ -35,7 +35,9 @@ async def generate_from_script(req: ScriptRequest):
         ])
 
     built = ast_to_plan(result.ast)
-    return built.to_response()
+    resp = built.to_response()
+    resp["floors"] = ast_to_floors(result.ast)
+    return resp
 
 
 @router.post("/generate/from-coords", response_model=GenerateResponse)

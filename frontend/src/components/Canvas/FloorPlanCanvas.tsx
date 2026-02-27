@@ -1,17 +1,27 @@
+import { useRef } from "react";
+import type { RefObject } from "react";
 import { Stage, Layer, Line, Arc } from "react-konva";
+import type Konva from "konva";
 import { WallShape } from "./WallShape";
 import { RoomLabel } from "./RoomLabel";
 import { DimensionLabel } from "./DimensionLabel";
 import { GridLayer } from "./GridLayer";
+import { ScaleRuler } from "./ScaleRuler";
+import { FurnitureShape } from "./FurnitureShape";
+import { FloorSelector } from "./FloorSelector";
 import { useCanvasControls } from "../../hooks/useCanvasControls";
 import { createTransform } from "../../utils/coordTransform";
-import type { FloorPlanResponse } from "../../types/plan";
+import type { FloorPlanResponse, FloorEntry } from "../../types/plan";
 
 interface Props {
   plan: FloorPlanResponse | null;
   width: number;
   height: number;
   showDimensions?: boolean;
+  stageRef?: RefObject<Konva.Stage | null>;
+  floors?: FloorEntry[];
+  activeFloor?: number;
+  onFloorChange?: (floor: number) => void;
 }
 
 function NorthArrow({ angle }: { angle: number }) {
@@ -60,7 +70,9 @@ function NorthArrow({ angle }: { angle: number }) {
   );
 }
 
-export function FloorPlanCanvas({ plan, width, height, showDimensions }: Props) {
+export function FloorPlanCanvas({ plan, width, height, showDimensions, stageRef, floors, activeFloor, onFloorChange }: Props) {
+  const internalRef = useRef<Konva.Stage>(null);
+  const resolvedRef = stageRef ?? internalRef;
   const { scale, position, onWheel, onDragEnd } = useCanvasControls();
 
   const transform = plan
@@ -88,7 +100,16 @@ export function FloorPlanCanvas({ plan, width, height, showDimensions }: Props) 
   return (
     <div style={{ position: "relative", width, height }}>
       {plan?.lot && <NorthArrow angle={plan.lot.north_angle} />}
+      <ScaleRuler scaleMmToPx={transform.scale} stageZoom={scale} />
+      {floors && floors.length > 1 && onFloorChange && (
+        <FloorSelector
+          floors={floors.map((f) => f.floor)}
+          activeFloor={activeFloor ?? 1}
+          onSelect={onFloorChange}
+        />
+      )}
       <Stage
+        ref={resolvedRef}
         width={width}
         height={height}
         scaleX={scale}
@@ -170,6 +191,18 @@ export function FloorPlanCanvas({ plan, width, height, showDimensions }: Props) 
           {/* Room labels */}
           {plan?.rooms.map((room, i) => (
             <RoomLabel key={`room-${i}`} room={room} transform={transform} />
+          ))}
+
+          {/* Furniture */}
+          {plan?.furniture?.map((furn, i) => (
+            <FurnitureShape
+              key={`furn-${i}`}
+              x={furn.x}
+              y={furn.y}
+              fixtureType={furn.fixture_type}
+              rotation={furn.rotation}
+              transform={transform}
+            />
           ))}
 
           {/* Wall dimension annotations */}

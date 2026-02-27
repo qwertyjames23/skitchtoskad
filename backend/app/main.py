@@ -15,6 +15,7 @@ from app.config import settings
 from app.api.routes_parse import router as parse_router
 from app.api.routes_generate import router as generate_router
 from app.api.routes_export import router as export_router
+from app.api.routes_project import router as project_router
 
 app = FastAPI(
     title=settings.app_name,
@@ -33,6 +34,7 @@ app.add_middleware(
 app.include_router(parse_router, prefix="/api")
 app.include_router(generate_router, prefix="/api")
 app.include_router(export_router, prefix="/api")
+app.include_router(project_router, prefix="/api")
 
 
 @app.get("/api/health")

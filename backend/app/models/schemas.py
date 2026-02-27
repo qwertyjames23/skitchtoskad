@@ -102,6 +102,7 @@ class RoomResponse(BaseModel):
     dimensions_mm: dict[str, float]
     perimeter_mm: float
     polygon: list[list[float]]
+    color: str = ""
 
 
 class GenerateResponse(BaseModel):
@@ -114,6 +115,8 @@ class GenerateResponse(BaseModel):
     building_footprint_sq_m: float = 0.0
     compliance: str | None = None
     wall_segments: list[dict] = []
+    furniture: list[dict] = []
+    floors: list[dict] = []  # [{floor: 1, ...plan_response}, {floor: 2, ...}]
 
 
 class ParseErrorResponse(BaseModel):

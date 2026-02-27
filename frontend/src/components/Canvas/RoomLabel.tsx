@@ -1,4 +1,4 @@
-import { Text, Group } from "react-konva";
+import { Text, Group, Rect } from "react-konva";
 import type { RoomInfo } from "../../types/plan";
 import type { Transform } from "../../utils/coordTransform";
 
@@ -43,6 +43,18 @@ export function RoomLabel({ room, transform }: Props) {
       clipHeight={textH}
       listening={false}
     >
+      {/* Room color fill — rendered behind text when ROOM COLOR is set */}
+      {room.color && (
+        <Rect
+          x={-(innerPad)}
+          y={-(innerPad)}
+          width={roomScreenW}
+          height={roomScreenH}
+          fill={room.color}
+          opacity={0.35}
+        />
+      )}
+
       {/* Room name — bold, primary hierarchy */}
       <Text
         x={sx - minX - innerPad - textW / 2}

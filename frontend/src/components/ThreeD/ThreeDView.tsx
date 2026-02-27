@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
@@ -7,12 +7,17 @@ import type { FloorPlanResponse, DoorInfo, WindowInfo, WallSegment } from "../..
 import type { View3DSettings } from "../../types/view3d";
 import { createPlan3DMapper } from "../../utils/plan3dMapping";
 
+export interface ThreeDCaptureHandle {
+  capture: () => string;
+}
+
 interface Props {
   plan: FloorPlanResponse | null;
   width: number;
   height: number;
   settings: View3DSettings;
   onSettingsChange: (patch: Partial<View3DSettings>) => void;
+  captureRef?: React.RefObject<ThreeDCaptureHandle | null>;
 }
 
 interface NumberSettingInputProps {
@@ -902,7 +907,7 @@ const panelStyle: CSSProperties = {
   backdropFilter: "blur(4px)",
 };
 
-export function ThreeDView({ plan, width, height, settings, onSettingsChange }: Props) {
+export function ThreeDView({ plan, width, height, settings, onSettingsChange, captureRef }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
@@ -925,7 +930,7 @@ export function ThreeDView({ plan, width, height, settings, onSettingsChange }: 
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
     renderer.setSize(widthRef.current, heightRef.current);
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.shadowMap.enabled = true;
@@ -986,6 +991,15 @@ export function ThreeDView({ plan, width, height, settings, onSettingsChange }: 
       cameraRef.current.updateProjectionMatrix();
     }
   }, [width, height]);
+
+  // ── Expose capture handle to parent ───────────────────────────────────────
+  useEffect(() => {
+    if (!captureRef) return;
+    captureRef.current = {
+      capture: () => rendererRef.current?.domElement.toDataURL("image/png") ?? "",
+    };
+    return () => { captureRef.current = null; };
+  }, [captureRef]);
 
   // ── Poly Haven HDRI loading ────────────────────────────────────────────────
   useEffect(() => {

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import type Konva from "konva";
 import { FloorPlanCanvas } from "./components/Canvas/FloorPlanCanvas";
 import { ScriptEditor } from "./components/Editor/ScriptEditor";
 import { Toolbar } from "./components/Toolbar/Toolbar";
@@ -13,8 +14,15 @@ import {
   parseScriptToPlanState,
 } from "./hooks/usePlanModeState";
 import { ThreeDView } from "./components/ThreeD/ThreeDView";
+import type { ThreeDCaptureHandle } from "./components/ThreeD/ThreeDView";
 import { PresentationMode } from "./components/Presentation/PresentationMode";
-import { saveScriptFile, loadScriptFile } from "./api/client";
+import { PrintLayoutModal } from "./components/PrintLayout/PrintLayoutModal";
+import {
+  saveScriptFile, loadScriptFile, exportIfcFromScript, downloadBlob,
+  apiSaveScriptToProject,
+} from "./api/client";
+import type { ProjectMetadata } from "./api/client";
+import { ProjectDialog } from "./components/ProjectDialog/ProjectDialog";
 import type { ToolType, SelectedElement, GridSnapMm } from "./types/planMode";
 import type { View3DSettings } from "./types/view3d";
 import { DEFAULT_VIEW3D_SETTINGS } from "./types/view3d";
@@ -93,6 +101,25 @@ export default function App() {
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
   const canvasContainerRef = useRef<HTMLDivElement>(null);
 
+  // ── PNG export refs ───────────────────────────────────────────────────────
+  const floorPlanStageRef = useRef<Konva.Stage | null>(null);
+  const threeDCaptureRef = useRef<ThreeDCaptureHandle | null>(null);
+
+  // ── Print modal ───────────────────────────────────────────────────────────
+  const [showPrint, setShowPrint] = useState(false);
+  const [printImageUrl, setPrintImageUrl] = useState<string | null>(null);
+
+  // ── Floor levels ──────────────────────────────────────────────────────────
+  const [activeFloor, setActiveFloor] = useState(1);
+
+  // ── Export loading state ──────────────────────────────────────────────────
+  const [exportLoading, setExportLoading] = useState<"dxf" | "ifc" | null>(null);
+
+  // ── Project system ────────────────────────────────────────────────────────
+  const [activeProject, setActiveProject] = useState<{ project_name: string; project_path: string } | null>(null);
+  const [projectDialogMode, setProjectDialogMode] = useState<"new" | "open" | null>(null);
+  const [projectSaving, setProjectSaving] = useState(false);
+
   useEffect(() => {
     const el = canvasContainerRef.current;
     if (!el) return;
@@ -167,6 +194,85 @@ export default function App() {
     setProjectName(name);
   }, [setScript]);
 
+  const handleExportPng = useCallback(() => {
+    const filename = `${projectName.replace(/\s+/g, "_")}.png`;
+    if (appMode === "3d") {
+      const dataUrl = threeDCaptureRef.current?.capture();
+      if (!dataUrl) return;
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = filename;
+      a.click();
+    } else {
+      const dataUrl = floorPlanStageRef.current?.toDataURL({ pixelRatio: 2 });
+      if (!dataUrl) return;
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = filename;
+      a.click();
+    }
+  }, [appMode, projectName]);
+
+  const handlePrint = useCallback(() => {
+    const dataUrl = floorPlanStageRef.current?.toDataURL({ pixelRatio: 3 });
+    if (!dataUrl) return;
+    setPrintImageUrl(dataUrl);
+    setShowPrint(true);
+  }, []);
+
+  const handleExportDxf = useCallback(async () => {
+    setExportLoading("dxf");
+    try {
+      if (appMode === "plan") await planExportDxf();
+      else await scriptExportDxf();
+    } finally {
+      setExportLoading(null);
+    }
+  }, [appMode, planExportDxf, scriptExportDxf]);
+
+  const handleExportIfc = useCallback(async () => {
+    const src = appMode === "plan" ? generatedScript || script : script;
+    if (!src?.trim()) return;
+    setExportLoading("ifc");
+    try {
+      const blob = await exportIfcFromScript(src);
+      downloadBlob(blob, `${projectName.replace(/\s+/g, "_")}.ifc`);
+    } catch {
+      // silently ignore — backend errors will show in generate errors
+    } finally {
+      setExportLoading(null);
+    }
+  }, [appMode, generatedScript, script, projectName]);
+
+  // ── Project handlers ─────────────────────────────────────────────────────
+  const handleProjectCreated = useCallback((meta: ProjectMetadata, projectPath: string) => {
+    setActiveProject({ project_name: meta.project_name, project_path: projectPath });
+    setProjectName(meta.project_name);
+    setProjectDialogMode(null);
+  }, []);
+
+  const handleProjectOpened = useCallback((meta: ProjectMetadata, loadedScript: string, projectPath: string) => {
+    setActiveProject({ project_name: meta.project_name, project_path: projectPath });
+    setProjectName(meta.project_name);
+    setScript(loadedScript);
+    setProjectDialogMode(null);
+  }, [setScript]);
+
+  const handleSaveToProject = useCallback(async () => {
+    if (!activeProject) return;
+    const src = appMode === "plan"
+      ? (generatedScript || planStateToScript(planState))
+      : script;
+    setProjectSaving(true);
+    try {
+      await apiSaveScriptToProject(src);
+    } catch {
+      // silently ignore — backend will be available when app is running
+    } finally {
+      setProjectSaving(false);
+    }
+  }, [activeProject, appMode, generatedScript, planState, script]);
+
   // ── Small collapse button style (Script mode) ─────────────────────────────
   useEffect(() => {
     if (appMode !== "plan") return;
@@ -195,12 +301,34 @@ export default function App() {
   const plan3d = planGenResult ?? scriptPlan;
   const currentErrors = appMode === "plan" ? planErrors : appMode === "script" ? scriptErrors : [];
 
+  // Active floor plan: use floor-partitioned plan if FLOOR commands were used
+  const rawPlan = appMode === "plan" ? (planGenResult ?? scriptPlan) : scriptPlan;
+  const floorEntries = rawPlan?.floors ?? [];
+  const floorDisplayPlan = floorEntries.length > 1
+    ? (floorEntries.find((f) => f.floor === activeFloor) ?? floorEntries[0])
+    : null;
+
+  // Compute a nominal scale label for the print title block
+  const activePlan = appMode === "plan" ? (planGenResult ?? scriptPlan) : scriptPlan;
+  const scaleLabel = (() => {
+    const bbox = activePlan?.bounding_box;
+    if (!bbox) return "NTS";
+    const widthMm = bbox[2] - bbox[0];
+    const a3PrintableMm = 380;
+    const raw = widthMm / a3PrintableMm;
+    const niceScales = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 5000];
+    const nice = niceScales.find((s) => s >= raw) ?? 5000;
+    return `1:${nice}`;
+  })();
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <Toolbar
         onGenerate={appMode === "plan" ? handlePlanGenerate : handleScriptGenerate}
-        onExportDxf={appMode === "plan" ? planExportDxf : scriptExportDxf}
+        onExportDxf={handleExportDxf}
+        onExportPng={handleExportPng}
         loading={appMode === "plan" ? planLoading : scriptLoading}
+        exportLoading={exportLoading}
         appMode={appMode}
         onModeChange={handleModeChange}
         planViewState={planViewState}
@@ -216,7 +344,34 @@ export default function App() {
         onPresent={() => setIsPresentationMode(true)}
         onSave={handleSave}
         onLoad={handleLoad}
+        onLoadTemplate={setScript}
+        onPrint={appMode !== "3d" ? handlePrint : undefined}
+        onExportIfc={appMode !== "3d" ? handleExportIfc : undefined}
+        activeProject={activeProject}
+        onNewProject={() => setProjectDialogMode("new")}
+        onOpenProject={() => setProjectDialogMode("open")}
+        onSaveToProject={handleSaveToProject}
+        projectSaving={projectSaving}
       />
+
+      {projectDialogMode && (
+        <ProjectDialog
+          mode={projectDialogMode}
+          onClose={() => setProjectDialogMode(null)}
+          onProjectCreated={handleProjectCreated}
+          onProjectOpened={handleProjectOpened}
+        />
+      )}
+
+      {showPrint && printImageUrl && (
+        <PrintLayoutModal
+          imageDataUrl={printImageUrl}
+          projectName={projectName}
+          scaleLabel={scaleLabel}
+          northAngle={activePlan?.lot?.north_angle}
+          onClose={() => setShowPrint(false)}
+        />
+      )}
 
       {isPresentationMode && (
         <PresentationMode
@@ -319,10 +474,14 @@ export default function App() {
             {/* Center: Canvas */}
             <div ref={canvasContainerRef} style={{ flex: 1, overflow: "hidden" }}>
               <FloorPlanCanvas
-                plan={scriptPlan}
+                plan={floorDisplayPlan ?? scriptPlan}
                 width={canvasSize.width}
                 height={canvasSize.height}
                 showDimensions={showDimensions}
+                stageRef={floorPlanStageRef}
+                floors={floorEntries.length > 1 ? floorEntries : undefined}
+                activeFloor={activeFloor}
+                onFloorChange={setActiveFloor}
               />
             </div>
 
@@ -437,10 +596,14 @@ export default function App() {
                 />
               ) : (
                 <FloorPlanCanvas
-                  plan={planGenResult ?? scriptPlan}
+                  plan={floorDisplayPlan ?? (planGenResult ?? scriptPlan)}
                   width={canvasSize.width}
                   height={canvasSize.height}
                   showDimensions={showDimensions}
+                  stageRef={floorPlanStageRef}
+                  floors={floorEntries.length > 1 ? floorEntries : undefined}
+                  activeFloor={activeFloor}
+                  onFloorChange={setActiveFloor}
                 />
               )}
             </div>
@@ -481,6 +644,7 @@ export default function App() {
               height={canvasSize.height}
               settings={view3dSettings}
               onSettingsChange={handleUpdate3DSettings}
+              captureRef={threeDCaptureRef}
             />
           </div>
         )}

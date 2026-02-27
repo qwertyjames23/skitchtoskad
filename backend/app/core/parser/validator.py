@@ -100,4 +100,37 @@ def validate(ast: FloorPlanAST) -> list[ValidationError]:
             ))
         seen_labels.add(label.text)
 
+    # Check ROOM commands
+    seen_rooms: set[str] = set()
+    for room in ast.room_commands:
+        if not room.text:
+            errors.append(ValidationError("ROOM has empty name", line=room.line))
+        if room.text in seen_rooms:
+            errors.append(ValidationError(
+                f"Duplicate ROOM name '{room.text}'",
+                line=room.line,
+            ))
+        seen_rooms.add(room.text)
+
+    # Check FURNITURE commands
+    _ALLOWED_FIXTURES = {
+        "toilet", "sink", "bathtub", "shower",
+        "bed-single", "bed-double", "sofa", "desk",
+        "dining-table", "stair",
+    }
+    for furn in ast.furniture_commands:
+        if furn.fixture_type not in _ALLOWED_FIXTURES:
+            errors.append(ValidationError(
+                f"Unknown fixture type '{furn.fixture_type}'. Allowed: {', '.join(sorted(_ALLOWED_FIXTURES))}",
+                line=furn.line,
+            ))
+
+    # Check FLOOR commands
+    for floor_cmd in ast.floor_commands:
+        if floor_cmd.level < 1:
+            errors.append(ValidationError(
+                f"Floor level must be at least 1, got {floor_cmd.level}",
+                line=floor_cmd.line,
+            ))
+
     return errors

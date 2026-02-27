@@ -19,6 +19,8 @@ class FloorPlan:
     doors: list[Door] = field(default_factory=list)
     windows: list[Window] = field(default_factory=list)
     labels: dict[str, tuple[float, float]] = field(default_factory=dict)
+    room_colors: dict[str, str] = field(default_factory=dict)  # room name -> hex color
+    furniture: list[dict] = field(default_factory=list)  # [{x, y, fixture_type, rotation}]
     lot: LotGeometry | None = None
     unit: str = "mm"
 
@@ -50,8 +52,8 @@ class FloorPlan:
         # Step 4: Assign labels to rooms by proximity
         rooms = []
         for i, rpoly in enumerate(room_polygons):
-            name = self._find_label_for_room(rpoly, i)
-            rooms.append(Room(name=name, polygon=rpoly))
+            name, color = self._find_label_for_room(rpoly, i)
+            rooms.append(Room(name=name, polygon=rpoly, color=color))
 
         return BuiltPlan(
             wall_geometry=merged,
@@ -59,17 +61,22 @@ class FloorPlan:
             rooms=rooms,
             doors=self.doors,
             windows=self.windows,
+            furniture=self.furniture,
             lot=self.lot,
             unit=self.unit,
         )
 
-    def _find_label_for_room(self, room_poly: Polygon, index: int) -> str:
-        """Find the label whose position falls inside this room polygon."""
+    def _find_label_for_room(self, room_poly: Polygon, index: int) -> tuple[str, str]:
+        """Find the label whose position falls inside this room polygon.
+
+        Returns (name, color) — color is from room_colors dict if set, else empty string.
+        """
+        from shapely.geometry import Point
         for label_text, label_pos in self.labels.items():
-            from shapely.geometry import Point
             if room_poly.contains(Point(label_pos)):
-                return label_text
-        return f"Room {index + 1}"
+                color = self.room_colors.get(label_text, "")
+                return label_text, color
+        return f"Room {index + 1}", ""
 
 
 @dataclass
@@ -81,6 +88,7 @@ class BuiltPlan:
     rooms: list[Room] = field(default_factory=list)
     doors: list[Door] = field(default_factory=list)
     windows: list[Window] = field(default_factory=list)
+    furniture: list[dict] = field(default_factory=list)
     lot: LotGeometry | None = None
     unit: str = "mm"
 
@@ -164,6 +172,7 @@ class BuiltPlan:
                 }
                 for ws in self.wall_segments
             ],
+            "furniture": self.furniture,
         }
         return resp
 
@@ -212,6 +221,28 @@ class BuiltPlan:
             minx, miny, maxx, maxy = bbox
             exporter.add_dimension((minx, miny), (maxx, miny), offset=-500)
             exporter.add_dimension((maxx, miny), (maxx, maxy), offset=500)
+
+
+    def write_to_ifc(self, exporter) -> None:
+        """Write this plan into an IFCExporter instance."""
+        DEFAULT_WALL_HEIGHT = 2700.0  # mm
+
+        for seg in self.wall_segments:
+            exporter.add_wall(seg.start, seg.end, seg.thickness, DEFAULT_WALL_HEIGHT)
+
+        for door in self.doors:
+            exporter.add_door(door.start, door.end, door.swing)
+
+        for window in self.windows:
+            exporter.add_window(window.start, window.end, window.sill_height, window.head_height)
+
+        for room in self.rooms:
+            exporter.add_room(
+                list(room.polygon.exterior.coords),
+                room.name,
+                room.area_sq_m,
+                DEFAULT_WALL_HEIGHT,
+            )
 
 
 def build_plan_from_coords(data: dict) -> BuiltPlan:

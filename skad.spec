@@ -56,6 +56,12 @@ a = Analysis(
         'app.core.exporter.dxf_writer',
         'app.core.exporter.dxf_layers',
         'app.core.exporter.dxf_blocks',
+        'app.core.exporter.ifc_writer',
+        # ifcopenshell — BIM/IFC export
+        'ifcopenshell',
+        'ifcopenshell.guid',
+        'ifcopenshell.util',
+        'ifcopenshell.util.element',
         'app.utils',
         'app.utils.units',
         # Pydantic

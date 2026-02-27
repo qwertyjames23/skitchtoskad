@@ -17,6 +17,9 @@ from app.core.parser.ast_nodes import (
     LotCommand,
     SetbackCommand,
     NorthCommand,
+    RoomCommand,
+    FurnitureCommand,
+    FloorCommand,
 )
 
 
@@ -87,6 +90,12 @@ class Parser:
             return self._parse_setback()
         elif keyword == "NORTH":
             return self._parse_north()
+        elif keyword == "ROOM":
+            return self._parse_room()
+        elif keyword == "FURNITURE":
+            return self._parse_furniture()
+        elif keyword == "FLOOR":
+            return self._parse_floor()
         else:
             self._error(f"Unknown command '{tok.value}'", tok)
             self._advance()
@@ -234,6 +243,44 @@ class Parser:
         if num_tok is None:
             return None
         return NorthCommand(angle=float(num_tok.value), line=tok.line)
+
+    def _parse_room(self) -> RoomCommand | None:
+        tok = self._advance()  # consume ROOM
+        pos = self._expect_coord()
+        if pos is None:
+            return None
+        text_tok = self._expect(TokenType.STRING, "room name")
+        if text_tok is None:
+            return None
+        color = ""
+        if self._match_keyword("COLOR"):
+            color_tok = self._expect(TokenType.HEX_COLOR, "hex color like #f5e6d3")
+            if color_tok:
+                color = color_tok.value
+        return RoomCommand(position=pos, text=text_tok.value, color=color, line=tok.line)
+
+    def _parse_floor(self) -> FloorCommand | None:
+        tok = self._advance()  # consume FLOOR
+        level_tok = self._expect(TokenType.NUMBER, "floor level (e.g. 1, 2)")
+        if level_tok is None:
+            return None
+        level = int(float(level_tok.value))
+        return FloorCommand(level=level, line=tok.line)
+
+    def _parse_furniture(self) -> FurnitureCommand | None:
+        tok = self._advance()  # consume FURNITURE
+        pos = self._expect_coord()
+        if pos is None:
+            return None
+        type_tok = self._expect(TokenType.STRING, 'fixture type e.g. "toilet"')
+        if type_tok is None:
+            return None
+        rotation = 0.0
+        if self._match_keyword("ROT"):
+            rot_tok = self._expect(TokenType.NUMBER, "rotation angle in degrees")
+            if rot_tok:
+                rotation = float(rot_tok.value)
+        return FurnitureCommand(position=pos, fixture_type=type_tok.value, rotation=rotation, line=tok.line)
 
     # ── Helper methods ──
 

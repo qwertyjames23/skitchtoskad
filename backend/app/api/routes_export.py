@@ -1,4 +1,4 @@
-"""Export endpoints — generate DXF files for download."""
+"""Export endpoints — generate DXF and IFC files for download."""
 
 import io
 from fastapi import APIRouter, HTTPException
@@ -11,6 +11,7 @@ from app.core.parser.validator import validate
 from app.models.plan_model import ast_to_plan
 from app.core.geometry.plan import build_plan_from_coords
 from app.core.exporter.dxf_writer import DXFExporter
+from app.core.exporter.ifc_writer import IFCExporter
 
 router = APIRouter(tags=["export"])
 
@@ -60,3 +61,45 @@ async def export_dxf_from_coords(req: CoordsRequest):
     data = req.model_dump()
     built = build_plan_from_coords(data)
     return _build_dxf_response(built, req.unit)
+
+
+# ── IFC export ───────────────────────────────────────────────────────────────
+
+
+def _build_ifc_response(built_plan, unit: str) -> StreamingResponse:
+    """Shared logic: render plan to IFC4 and return as streaming download."""
+    exporter = IFCExporter(unit=unit)
+    built_plan.write_to_ifc(exporter)
+    ifc_bytes = exporter.to_bytes()
+
+    return StreamingResponse(
+        io.BytesIO(ifc_bytes),
+        media_type="application/x-step",
+        headers={"Content-Disposition": 'attachment; filename="floorplan.ifc"'},
+    )
+
+
+@router.post("/export/ifc/from-script")
+async def export_ifc_from_script(req: ScriptRequest):
+    """Parse script and export as IFC4 file."""
+    try:
+        tokens = tokenize(req.script)
+    except TokenizeError as e:
+        raise HTTPException(422, detail=[{"message": str(e), "line": e.line}])
+
+    result = parse(tokens)
+    if not result.ok:
+        raise HTTPException(422, detail=[
+            {"message": e.message, "line": e.line, "col": e.col}
+            for e in result.errors
+        ])
+
+    errors = validate(result.ast)
+    if errors:
+        raise HTTPException(422, detail=[
+            {"message": e.message, "line": e.line}
+            for e in errors
+        ])
+
+    built = ast_to_plan(result.ast)
+    return _build_ifc_response(built, req.unit)

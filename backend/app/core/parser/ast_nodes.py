@@ -65,7 +65,29 @@ class NorthCommand:
     line: int = 0
 
 
-Command = Union[WallCommand, DoorCommand, WindowCommand, LabelCommand, UnitCommand, LotCommand, SetbackCommand, NorthCommand]
+@dataclass
+class RoomCommand:
+    position: tuple[float, float]
+    text: str = ""
+    color: str = ""  # hex color e.g. "#f5e6d3", empty = auto palette
+    line: int = 0
+
+
+@dataclass
+class FurnitureCommand:
+    position: tuple[float, float]
+    fixture_type: str = "desk"
+    rotation: float = 0.0  # degrees clockwise
+    line: int = 0
+
+
+@dataclass
+class FloorCommand:
+    level: int = 1  # floor number (1-based)
+    line: int = 0
+
+
+Command = Union[WallCommand, DoorCommand, WindowCommand, LabelCommand, UnitCommand, LotCommand, SetbackCommand, NorthCommand, RoomCommand, FurnitureCommand, FloorCommand]
 
 
 @dataclass
@@ -103,3 +125,15 @@ class FloorPlanAST:
     def north(self) -> "NorthCommand | None":
         cmds = [c for c in self.commands if isinstance(c, NorthCommand)]
         return cmds[0] if cmds else None
+
+    @property
+    def room_commands(self) -> list[RoomCommand]:
+        return [c for c in self.commands if isinstance(c, RoomCommand)]
+
+    @property
+    def furniture_commands(self) -> list[FurnitureCommand]:
+        return [c for c in self.commands if isinstance(c, FurnitureCommand)]
+
+    @property
+    def floor_commands(self) -> list[FloorCommand]:
+        return [c for c in self.commands if isinstance(c, FloorCommand)]

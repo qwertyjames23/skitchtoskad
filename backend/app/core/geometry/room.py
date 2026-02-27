@@ -14,6 +14,7 @@ class Room:
 
     name: str
     polygon: Polygon
+    color: str = ""  # optional hex fill color from ROOM command, e.g. "#f5e6d3"
 
     @property
     def area_mm2(self) -> float:
@@ -62,4 +63,5 @@ class Room:
             "dimensions_mm": self.dimensions_mm,
             "perimeter_mm": round(self.perimeter_mm, 1),
             "polygon": list(self.polygon.exterior.coords),
+            "color": self.color,
         }

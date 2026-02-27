@@ -14,6 +14,7 @@ class TokenType(Enum):
     NUMBER = auto()    # 200, 3.5
     STRING = auto()    # "Kitchen"
     IDENT = auto()     # left, right, mm, cm
+    HEX_COLOR = auto() # #f5e6d3
     NEWLINE = auto()
     EOF = auto()
 
@@ -24,6 +25,12 @@ KEYWORDS = {
     # Lot plan commands
     "LOT", "SETBACK", "NORTH",
     "FRONT", "REAR", "SIDE", "LEFT", "RIGHT",
+    # Room command
+    "ROOM", "COLOR",
+    # Furniture command
+    "FURNITURE", "ROT",
+    # Floor level command
+    "FLOOR",
 }
 
 # Regex patterns for tokens
@@ -31,6 +38,7 @@ _COORD_RE = re.compile(r"\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)")
 _NUMBER_RE = re.compile(r"-?\d+(?:\.\d+)?")
 _STRING_RE = re.compile(r'"([^"]*)"')
 _IDENT_RE = re.compile(r"[A-Za-z_]\w*")
+_HEX_COLOR_RE = re.compile(r"#[0-9a-fA-F]{6}")
 
 
 @dataclass(frozen=True)
@@ -81,6 +89,13 @@ def tokenize(source: str) -> list[Token]:
             m = _STRING_RE.match(stripped, pos)
             if m:
                 tokens.append(Token(TokenType.STRING, m.group(1), line_num, pos))
+                pos = m.end()
+                continue
+
+            # Hex color #rrggbb
+            m = _HEX_COLOR_RE.match(stripped, pos)
+            if m:
+                tokens.append(Token(TokenType.HEX_COLOR, m.group(0), line_num, pos))
                 pos = m.end()
                 continue
 
